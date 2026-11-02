@@ -1,0 +1,227 @@
+
+
+Skip to content
+Using Gmail with screen readers
+in:sent 
+1 of 354
+(no subject)
+
+Shubhangi Bhonde <shubhabhonde@gmail.com>
+Attachments
+9:59 PM (43 minutes ago)
+to bhondeshubha51@gmail.com
+
+ One attachment
+  •  Scanned by Gmail
+final(final).txt
+100%
+ansible
+nano inventory.ini
+[servers]
+server ansible_host=192.168.56.138 ansible_user=iacsd
+nano playbook.yaml
+---
+ - name: install curl and  create user
+   hosts: server
+   become: true
+
+   tasks:
+   - name: create user
+     ansible.builtin.user:
+       name: kharche
+       group: iacsd
+       state: present
+
+   - name: install curl
+     ansible.builtin.package:
+       name: curl
+       update_cache: true
+       state: present
+
+ ansible server -m ping -i inventory.ini
+ ansible-playbook playbook.yaml -i inventory.ini
+======================================================================
+docker-compose.yaml file
+services:
+  nginx:
+    image: nginx
+    container_name: rproxy
+    ports:
+    - "80:80"
+    volumes:
+    - ./rproxy/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web1
+      - web2
+    restart: unless-stopped
+    networks:
+      - web-network
+
+  web1:
+    image: ubuntu/apache2
+    container_name: web1
+    ports:
+      - "80"
+    volumes:
+      - ./web1:/var/www/html:ro
+    restart: unless-stopped
+    networks:
+      - web-network
+
+
+  web2:
+    image: ubuntu/apache2
+    container_name: web2
+    ports:
+      - "80"
+    volumes:
+      - ./web2:/var/www/html:ro
+    restart: unless-stopped
+    networks:
+      - web-network
+
+networks:
+  web-network:
+    driver: bridge
+===========================================
+ in rproxy dir = nginx.conf
+
+events {}
+
+http {
+        server{
+                listen 80;
+                location /web1/ {
+                        proxy_pass http://web1:80/;
+                }
+
+                location /web2/ {
+                        proxy_pass http://web2:80/;
+                }
+        }
+}
+
+=========================================
+web1 html code
+<html>
+<head>
+    <title>Web1</title>
+</head>
+<body>
+    <h1>Hello from Web1</h1>
+    <a href="/web2/">Go to Web2</a>
+</body>
+</html>
+
+==========================
+web2
+<html>
+<head>
+    <title>Web2</title>
+</head>
+<body>
+    <h1>Hii from Web2</h1>
+    <a href="/web1/">Go to Web1</a>
+</body>
+</html>
+=====================================
+
+  docker-compose down --remove-orphans
+  docker compose ps
+  348  docker-compose up -d
+  349  systemctl status apache2
+  350  systemctl stop apache2
+  351  sudo systemctl stop apache2
+  352  sudo systemctl disable apache2
+  353  docker-compose down --remove-orphans
+  354  docker-compose up -d
+==============================================================================================
+Server -> pserver
+client -> pclient
+
+ping each other with the name (static /etc/hosts)
+
+###SERVER
+
+apt update
+apt install puppetserver -y
+
+puppetserver --version
+sudo systemctl enable puppetserver
+
+
+################
+nano /etc/puppet/puppet.conf
+
+[main]
+server = pserver
+runinterval = 60
+
+####
+sudo systemctl start puppetserver
+
+systemctl is-active puppetserver
+
+ss -antp
+it's working on the port 8140
+
+
+# to check the configuration
+sudo puppet config print server
+
+output - pserver
+
+
+################################CLIENT
+
+sudo apt install puppet-agent -y
+sudo nano /etc/puppet/puppet.conf
+[main]
+server = pserver
+runinterval = 60
+sudo systemctl enable puppet
+sudo systemctl start puppet
+sudo puppet config print server
+output - pserver
+####
+agent
+sudo puppet agent -t
+ Server
+sudo puppetserver ca list
+Output -
+ pclient       (SHA256)  00:5A:BF:39:56:6C:3C:B4:E0:5E:F7:11:18:C5:C6:81:E0:E9:5C:06:74:3F:99:6D:37:9F:DF:82:E1:02:5D:B1
+Sign the certificate
+# sudo puppetserver ca sign --certname pclient
+################
+Puppet Server
+star@pserver:~$ sudo nano /etc/puppet/code/environments/production/manifests/site.pp
+node 'pclient'{
+        package { 'apache2':
+                ensure => installed,
+}
+}
+============================================================#################
+#!/bin/bash
+sudo apt update
+sudo apt install fontconfig openjdk-21-jre -y
+
+sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+sudo apt update
+sudo apt install jenkins -y
+
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl is-active jenkins
+==================================================================================================
+
+
+
+
+
+Displaying final(final).txt.
